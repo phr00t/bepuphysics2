@@ -280,6 +280,16 @@ namespace BepuPhysics.Collidables
             bufferPool.Return(ref Children);
         }
 
+        public void ComputeInertia(float mass, out BodyInertia bi) {
+            bi = new BodyInertia() {
+                InverseMass = 1f / mass,
+            };
+        }
+
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
+            return new CollidableDescription(sim.Shapes.Add<Compound>(in this), margin);
+        }
+
         /// <summary>
         /// Type id of list based compound shapes.
         /// </summary>

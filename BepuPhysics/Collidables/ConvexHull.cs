@@ -289,6 +289,9 @@ namespace BepuPhysics.Collidables
             bufferPool.Return(ref FaceToVertexIndicesStart);
         }
 
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
+            return new CollidableDescription(sim.Shapes.Add<ConvexHull>(in this), margin);
+        }
 
         /// <summary>
         /// Type id of convex hull shapes.

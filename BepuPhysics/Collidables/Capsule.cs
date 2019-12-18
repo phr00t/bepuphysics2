@@ -184,7 +184,9 @@ namespace BepuPhysics.Collidables
             return new ConvexShapeBatch<Capsule, CapsuleWide>(pool, initialCapacity);
         }
 
-
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
+            return new CollidableDescription(sim.Shapes.Add<Capsule>(in this), margin);
+        }
 
         /// <summary>
         /// Type id of capsule shapes.

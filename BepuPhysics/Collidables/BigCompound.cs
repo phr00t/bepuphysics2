@@ -219,6 +219,16 @@ namespace BepuPhysics.Collidables
             Tree.Dispose(bufferPool);
         }
 
+        public void ComputeInertia(float mass, out BodyInertia bi) {
+            bi = new BodyInertia() {
+                InverseMass = 1f / mass
+            };
+        }
+
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1f) {
+            return new CollidableDescription(sim.Shapes.Add<BigCompound>(in this), margin);
+        }
+
         /// <summary>
         /// Type id of compound shapes.
         /// </summary>

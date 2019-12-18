@@ -166,6 +166,10 @@ namespace BepuPhysics.Collidables
             return new ConvexShapeBatch<Box, BoxWide>(pool, initialCapacity);
         }
 
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
+            return new CollidableDescription(sim.Shapes.Add<Box>(in this), margin);
+        }
+
         /// <summary>
         /// Type id of box shapes.
         /// </summary>

@@ -186,6 +186,10 @@ namespace BepuPhysics.Collidables
             return new ConvexShapeBatch<Cylinder, CylinderWide>(pool, initialCapacity);
         }
 
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
+            return new CollidableDescription(sim.Shapes.Add<Cylinder>(in this), margin);
+        }
+
         /// <summary>
         /// Type id of cylinder shapes.
         /// </summary>

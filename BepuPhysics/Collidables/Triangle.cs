@@ -126,6 +126,10 @@ namespace BepuPhysics.Collidables
             return new ConvexShapeBatch<Triangle, TriangleWide>(pool, initialCapacity);
         }
 
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
+            return new CollidableDescription(sim.Shapes.Add<Triangle>(in this), margin);
+        }
+
         /// <summary>
         /// Type id of triangle shapes.
         /// </summary>

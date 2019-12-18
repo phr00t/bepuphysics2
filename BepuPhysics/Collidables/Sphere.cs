@@ -111,6 +111,10 @@ namespace BepuPhysics.Collidables
             return new ConvexShapeBatch<Sphere, SphereWide>(pool, initialCapacity);
         }
 
+        public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
+            return new CollidableDescription(sim.Shapes.Add<Sphere>(in this), margin);
+        }
+
 
         /// <summary>
         /// Type id of sphere shapes.
