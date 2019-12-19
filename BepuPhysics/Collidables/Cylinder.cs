@@ -190,6 +190,10 @@ namespace BepuPhysics.Collidables
             return new CollidableDescription(sim.Shapes.Add<Cylinder>(in this), margin);
         }
 
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<Cylinder>(in this);
+        }
+
         /// <summary>
         /// Type id of cylinder shapes.
         /// </summary>

@@ -130,6 +130,10 @@ namespace BepuPhysics.Collidables
             return new CollidableDescription(sim.Shapes.Add<Triangle>(in this), margin);
         }
 
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<Triangle>(in this);
+        }
+
         /// <summary>
         /// Type id of triangle shapes.
         /// </summary>

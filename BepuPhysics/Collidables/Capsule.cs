@@ -188,6 +188,10 @@ namespace BepuPhysics.Collidables
             return new CollidableDescription(sim.Shapes.Add<Capsule>(in this), margin);
         }
 
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<Capsule>(in this);
+        }
+
         /// <summary>
         /// Type id of capsule shapes.
         /// </summary>

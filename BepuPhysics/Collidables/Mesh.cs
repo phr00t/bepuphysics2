@@ -432,6 +432,10 @@ namespace BepuPhysics.Collidables
             return new CollidableDescription(sim.Shapes.Add<Mesh>(in this), margin);
         }
 
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<Mesh>(in this);
+        }
+
         /// <summary>
         /// Type id of mesh shapes.
         /// </summary>

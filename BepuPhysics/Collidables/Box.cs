@@ -170,6 +170,10 @@ namespace BepuPhysics.Collidables
             return new CollidableDescription(sim.Shapes.Add<Box>(in this), margin);
         }
 
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<Box>(in this);
+        }
+
         /// <summary>
         /// Type id of box shapes.
         /// </summary>

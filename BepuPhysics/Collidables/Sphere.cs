@@ -115,6 +115,9 @@ namespace BepuPhysics.Collidables
             return new CollidableDescription(sim.Shapes.Add<Sphere>(in this), margin);
         }
 
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<Sphere>(in this);
+        }
 
         /// <summary>
         /// Type id of sphere shapes.

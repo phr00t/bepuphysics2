@@ -293,6 +293,10 @@ namespace BepuPhysics.Collidables
             return new CollidableDescription(sim.Shapes.Add<ConvexHull>(in this), margin);
         }
 
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<ConvexHull>(in this);
+        }
+
         /// <summary>
         /// Type id of convex hull shapes.
         /// </summary>

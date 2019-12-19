@@ -220,13 +220,19 @@ namespace BepuPhysics.Collidables
         }
 
         public void ComputeInertia(float mass, out BodyInertia bi) {
-            bi = new BodyInertia() {
-                InverseMass = 1f / mass
-            };
+            if (CalculatedCompoundInertias.calculatedInertia.TryGetValue(this, out bi) == false) {
+                bi = new BodyInertia() {
+                    InverseMass = mass > 0f ? 1f / mass : 0f,
+                };
+            }
         }
 
         public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1f) {
             return new CollidableDescription(sim.Shapes.Add<BigCompound>(in this), margin);
+        }
+
+        public TypedIndex AddToShapes(Shapes shapes) {
+            return shapes.Add<BigCompound>(in this);
         }
 
         /// <summary>

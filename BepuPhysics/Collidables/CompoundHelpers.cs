@@ -10,6 +10,10 @@ using System.Text;
 
 namespace BepuPhysics.Collidables
 {
+    internal class CalculatedCompoundInertias {
+        internal static Dictionary<ICompoundShape, BodyInertia> calculatedInertia = new Dictionary<ICompoundShape, BodyInertia>();
+    }
+
     /// <summary>
     /// Reusable convenience type for incrementally building compound shapes.
     /// </summary>
@@ -61,6 +65,23 @@ namespace BepuPhysics.Collidables
         }
 
         /// <summary>
+        /// Adds a new shape to the accumulator, creating a new shape in the shapes set. The mass used to compute the inertia tensor will be based on the given weight.
+        /// </summary>
+        /// <typeparam name="TShape">Type of the shape to add to the accumulator and the shapes set.</typeparam>
+        /// <param name="shape">Shape to add.</param>
+        /// <param name="localPose">Pose of the shape in the compound's local space.</param>
+        /// <param name="weight">Weight of the shape. If the compound is interpreted as a dynamic, this will be used as the mass and scales the inertia tensor. 
+        /// Otherwise, it is used for recentering.</param>
+        public void AddEasy(in IConvexShape shape, in RigidPose localPose, float weight) {
+            ref var child = ref Children.Allocate(Pool);
+            child.LocalPose = localPose;
+            child.ShapeIndex = shape.AddToShapes(Shapes);
+            child.Weight = weight;
+            shape.ComputeInertia(weight, out var inertia);
+            Symmetric3x3.Invert(inertia.InverseInertiaTensor, out child.Inertia);
+        }
+
+        /// <summary>
         /// Adds a new shape to the accumulator, creating a new shape in the shapes set. Inertia is assumed to be infinite.
         /// </summary>
         /// <typeparam name="TShape">Type of the shape to add to the accumulator and the shapes set.</typeparam>
@@ -72,6 +93,21 @@ namespace BepuPhysics.Collidables
             ref var child = ref Children.Allocate(Pool);
             child.LocalPose = localPose;
             child.ShapeIndex = Shapes.Add(shape);
+            child.Weight = weight;
+            child.Inertia = default;
+        }
+
+        /// <summary>
+        /// Adds a new shape to the accumulator, creating a new shape in the shapes set. Inertia is assumed to be infinite.
+        /// </summary>
+        /// <typeparam name="TShape">Type of the shape to add to the accumulator and the shapes set.</typeparam>
+        /// <param name="shape">Shape to add.</param>
+        /// <param name="localPose">Pose of the shape in the compound's local space.</param>
+        /// <param name="weight">Weight of the shape. If the compound is interpreted as a dynamic, this will be used as the mass. Otherwise, it is used for recentering.</param>
+        public void AddForKinematicEasy(in IShape shape, in RigidPose localPose, float weight) {
+            ref var child = ref Children.Allocate(Pool);
+            child.LocalPose = localPose;
+            child.ShapeIndex = shape.AddToShapes(Shapes);
             child.Weight = weight;
             child.Inertia = default;
         }
@@ -160,6 +196,38 @@ namespace BepuPhysics.Collidables
                 targetChild.ShapeIndex = sourceChild.ShapeIndex;
             }
             Symmetric3x3.Invert(summedInertia, out inertia.InverseInertiaTensor);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ClearCompoundInertiaCache() {
+            CalculatedCompoundInertias.calculatedInertia.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static BodyInertia GetCompoundInertiaFromCache(ICompoundShape cs) {
+            return CalculatedCompoundInertias.calculatedInertia[cs];
+        }
+
+        /// <summary>
+        /// Builds a ICompoundShape, either BigCompound if it meets the threshold, or a Compound otherwise. Caches the inertia internally.
+        /// </summary>
+        /// <param name="isDynamic"></param>
+        /// <param name="shapes"></param>
+        /// <param name="bufferPool"></param>
+        /// <param name="bigThreshold"></param>
+        /// <returns></returns>
+        public ICompoundShape BuildCompleteCompoundShape(Shapes shapes, BufferPool bufferPool, bool isDynamic = true, int bigThreshold = 5) {
+            Buffer<CompoundChild> children;
+            if (isDynamic) {
+                BuildDynamicCompound(out children, out BodyInertia bi);
+                ICompoundShape cs = Children.Count >= bigThreshold ? new BigCompound(children, shapes, bufferPool) : new Compound(children) as ICompoundShape;
+                CalculatedCompoundInertias.calculatedInertia[cs] = bi;
+                return cs;
+            } else {
+                BuildKinematicCompound(out children);
+                ICompoundShape cs = Children.Count >= bigThreshold ? new BigCompound(children, shapes, bufferPool) : new Compound(children) as ICompoundShape;
+                return cs;
+            }
         }
 
         /// <summary>

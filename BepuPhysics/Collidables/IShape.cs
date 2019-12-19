@@ -17,6 +17,7 @@ namespace BepuPhysics.Collidables
         int TypeId { get; }
         ShapeBatch CreateShapeBatch(BufferPool pool, int initialCapacity, Shapes shapeBatches);
         CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1f);
+        TypedIndex AddToShapes(Shapes shapes);
     }
 
     //Note that the following bounds functions require only an orientation because the effect of the position on the bounding box is the same for all shapes.
