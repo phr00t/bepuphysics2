@@ -2,6 +2,7 @@
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -11,7 +12,7 @@ using System.Text;
 namespace BepuPhysics.Collidables
 {
     internal class CalculatedCompoundInertias {
-        internal static Dictionary<ICompoundShape, BodyInertia> calculatedInertia = new Dictionary<ICompoundShape, BodyInertia>();
+        internal static ConcurrentDictionary<ICompoundShape, BodyInertia> calculatedInertia = new ConcurrentDictionary<ICompoundShape, BodyInertia>();
     }
 
     /// <summary>
