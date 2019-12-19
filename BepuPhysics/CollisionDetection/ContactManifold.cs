@@ -122,6 +122,8 @@ namespace BepuPhysics.CollisionDetection
         /// <returns>Reference to a contact's feature id.</returns>
         ref int GetFeatureId(ref TManifold manifold, int contactIndex);
 
+        public Vector3 SimpleGetNormal(int index = 0);
+        public Vector3 SimpleGetOffset(int index = 0);
     }
 
     //TODO: We could use specialized storage types for things like continuations if L2 can't actually hold it all. Seems unlikely, but it's not that hard if required.
@@ -271,6 +273,38 @@ namespace BepuPhysics.CollisionDetection
         {
             return ref Unsafe.Add(ref manifold.Contact0, contactIndex).FeatureId;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 SimpleGetNormal(int index = 0) {
+            if (Count <= index) return Vector3.Zero;
+            switch (index) {
+                default:
+                case 0:
+                    return Contact0.Normal;
+                case 1:
+                    return Contact1.Normal;
+                case 2:
+                    return Contact2.Normal;
+                case 3:
+                    return Contact3.Normal;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 SimpleGetOffset(int index = 0) {
+            if (Count <= index) return OffsetB;
+            switch (index) {
+                default:
+                case 0:
+                    return Contact0.Offset;
+                case 1:
+                    return Contact1.Offset;
+                case 2:
+                    return Contact2.Offset;
+                case 3:
+                    return Contact3.Offset;
+            }
+        }
     }
 
     /// <summary>
@@ -401,6 +435,27 @@ namespace BepuPhysics.CollisionDetection
         public ref int GetFeatureId(ref ConvexContactManifold manifold, int contactIndex)
         {
             return ref Unsafe.Add(ref manifold.Contact0, contactIndex).FeatureId;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 SimpleGetNormal(int index = 0) {
+            return Normal;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 SimpleGetOffset(int index = 0) {
+            if (Count <= index) return OffsetB;
+            switch (index) {
+                default:
+                case 0:
+                    return Contact0.Offset;
+                case 1:
+                    return Contact1.Offset;
+                case 2:
+                    return Contact2.Offset;
+                case 3:
+                    return Contact3.Offset;
+            }
         }
     }
 
