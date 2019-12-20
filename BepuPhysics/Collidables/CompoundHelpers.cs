@@ -105,7 +105,7 @@ namespace BepuPhysics.Collidables
         /// <param name="shape">Shape to add.</param>
         /// <param name="localPose">Pose of the shape in the compound's local space.</param>
         /// <param name="weight">Weight of the shape. If the compound is interpreted as a dynamic, this will be used as the mass. Otherwise, it is used for recentering.</param>
-        public void AddForKinematicEasy(in IShape shape, in RigidPose localPose, float weight) {
+        public void AddForKinematicEasy(in IConvexShape shape, in RigidPose localPose, float weight) {
             ref var child = ref Children.Allocate(Pool);
             child.LocalPose = localPose;
             child.ShapeIndex = shape.AddToShapes(Shapes);
