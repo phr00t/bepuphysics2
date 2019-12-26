@@ -428,12 +428,19 @@ namespace BepuPhysics.Collidables
             };
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
             return new CollidableDescription(sim.Shapes.Add<Mesh>(in this), margin);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TypedIndex AddToShapes(Shapes shapes) {
             return shapes.Add<Mesh>(in this);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe int GetSize() {
+            return sizeof(Mesh);
         }
 
         /// <summary>

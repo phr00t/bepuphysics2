@@ -274,6 +274,7 @@ namespace BepuPhysics.CollisionDetection
             CacheShapes(ref reference, shapeA, shapeB, shapeSizeA, shapeSizeB, out var cachedShapeA, out var cachedShapeB);
             AddDirectly(ref reference, shapeTypeA, shapeTypeB, cachedShapeA, cachedShapeB, offsetB, orientationA, orientationB, default, default, speculativeMargin, default, new PairContinuation(pairId));
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Add<TShapeA, TShapeB>(TShapeA shapeA, TShapeB shapeB, in Vector3 offsetB, in Quaternion orientationA, in Quaternion orientationB, float speculativeMargin, int pairId)
             where TShapeA : struct, IShape where TShapeB : struct, IShape
@@ -283,6 +284,12 @@ namespace BepuPhysics.CollisionDetection
             //TODO: You could recover the performance and safety once generic pointers exist. By having pointers in the parameter list, we can require that the user handle GC safety.
             //(We could also have an explicit 'unsafe' overload, but that API complexity doesn't seem worthwhile. My guess is nontrivial uses will all use the underlying function directly.)
             Add(shapeA.TypeId, shapeB.TypeId, Unsafe.SizeOf<TShapeA>(), Unsafe.SizeOf<TShapeB>(), Unsafe.AsPointer(ref shapeA), Unsafe.AsPointer(ref shapeB),
+                offsetB, orientationA, orientationB, speculativeMargin, pairId);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void AddEasy(IShape shapeA, IShape shapeB, in Vector3 offsetB, in Quaternion orientationA, in Quaternion orientationB, float speculativeMargin, int pairId) {
+            Add(shapeA.TypeId, shapeB.TypeId, shapeA.GetSize(), shapeB.GetSize(), Unsafe.AsPointer(ref shapeA), Unsafe.AsPointer(ref shapeB),
                 offsetB, orientationA, orientationB, speculativeMargin, pairId);
         }
 

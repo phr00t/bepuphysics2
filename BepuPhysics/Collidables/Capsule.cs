@@ -184,12 +184,19 @@ namespace BepuPhysics.Collidables
             return new ConvexShapeBatch<Capsule, CapsuleWide>(pool, initialCapacity);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
             return new CollidableDescription(sim.Shapes.Add<Capsule>(in this), margin);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TypedIndex AddToShapes(Shapes shapes) {
             return shapes.Add<Capsule>(in this);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe int GetSize() {
+            return sizeof(Capsule);
         }
 
         /// <summary>

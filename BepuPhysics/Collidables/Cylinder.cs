@@ -186,12 +186,19 @@ namespace BepuPhysics.Collidables
             return new ConvexShapeBatch<Cylinder, CylinderWide>(pool, initialCapacity);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1F) {
             return new CollidableDescription(sim.Shapes.Add<Cylinder>(in this), margin);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TypedIndex AddToShapes(Shapes shapes) {
             return shapes.Add<Cylinder>(in this);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe int GetSize() {
+            return sizeof(Cylinder);
         }
 
         /// <summary>
