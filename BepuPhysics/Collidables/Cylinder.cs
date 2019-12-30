@@ -201,6 +201,11 @@ namespace BepuPhysics.Collidables
             return sizeof(Cylinder);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void* GetPointer() {
+            return Unsafe.AsPointer(ref this);
+        }
+
         /// <summary>
         /// Type id of cylinder shapes.
         /// </summary>

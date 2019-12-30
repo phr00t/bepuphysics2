@@ -126,6 +126,11 @@ namespace BepuPhysics.Collidables
             return sizeof(Sphere);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void* GetPointer() {
+            return Unsafe.AsPointer(ref this);
+        }
+
         /// <summary>
         /// Type id of sphere shapes.
         /// </summary>

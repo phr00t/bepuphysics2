@@ -19,6 +19,7 @@ namespace BepuPhysics.Collidables
         CollidableDescription GenerateDescription(Simulation sim, float margin = 0.1f);
         TypedIndex AddToShapes(Shapes shapes);
         int GetSize();
+        unsafe void* GetPointer();
     }
 
     //Note that the following bounds functions require only an orientation because the effect of the position on the bounding box is the same for all shapes.

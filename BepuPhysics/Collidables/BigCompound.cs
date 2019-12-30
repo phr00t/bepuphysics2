@@ -242,6 +242,11 @@ namespace BepuPhysics.Collidables
             return sizeof(BigCompound);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void* GetPointer() {
+            return Unsafe.AsPointer(ref this);
+        }
+
         /// <summary>
         /// Type id of compound shapes.
         /// </summary>

@@ -303,6 +303,11 @@ namespace BepuPhysics.Collidables
             return sizeof(Compound);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void* GetPointer() {
+            return Unsafe.AsPointer(ref this);
+        }
+
         /// <summary>
         /// Type id of list based compound shapes.
         /// </summary>

@@ -141,6 +141,11 @@ namespace BepuPhysics.Collidables
             return sizeof(Triangle);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void* GetPointer() {
+            return Unsafe.AsPointer(ref this);
+        }
+
         /// <summary>
         /// Type id of triangle shapes.
         /// </summary>

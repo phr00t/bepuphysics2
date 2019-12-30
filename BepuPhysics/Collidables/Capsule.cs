@@ -199,6 +199,11 @@ namespace BepuPhysics.Collidables
             return sizeof(Capsule);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void* GetPointer() {
+            return Unsafe.AsPointer(ref this);
+        }
+
         /// <summary>
         /// Type id of capsule shapes.
         /// </summary>

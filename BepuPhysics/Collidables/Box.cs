@@ -181,6 +181,11 @@ namespace BepuPhysics.Collidables
             return sizeof(Box);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void* GetPointer() {
+            return Unsafe.AsPointer(ref this);
+        }
+
         /// <summary>
         /// Type id of box shapes.
         /// </summary>
