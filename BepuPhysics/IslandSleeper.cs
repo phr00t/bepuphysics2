@@ -1,6 +1,7 @@
 ﻿using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
+using BepuPhysics.Threading;
 using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
@@ -443,20 +444,20 @@ namespace BepuPhysics
                     break;
                 case RemovalJobType.RemoveBodiesFromActiveSet:
                     {
-                        for (int setReferenceIndex = 0; setReferenceIndex < newInactiveSets.Count; ++setReferenceIndex)
-                        {
-                            var setIndex = newInactiveSets[setReferenceIndex].Index;
-                            ref var inactiveBodySet = ref bodies.Sets[setIndex];
-                            ref var inactiveConstraintSet = ref solver.Sets[setIndex];
-                            for (int bodyIndex = 0; bodyIndex < inactiveBodySet.Count; ++bodyIndex)
-                            {
-                                ref var location = ref bodies.HandleToLocation[inactiveBodySet.IndexToHandle[bodyIndex]];
-                                Debug.Assert(location.SetIndex == 0, "At this point, the sleep hasn't gone through so the set should still be 0.");
-                                constraintRemover.TryRemoveAllConstraintsForBodyFromFallbackBatch(location.Index);
-                                bodies.RemoveFromActiveSet(location.Index);
-                                //And now we can actually update the handle->body mapping.
-                                location.SetIndex = setIndex;
-                                location.Index = bodyIndex;
+                        using (Bodies.bodyLocker.ReadLock()) {
+                            for (int setReferenceIndex = 0; setReferenceIndex < newInactiveSets.Count; ++setReferenceIndex) {
+                                var setIndex = newInactiveSets[setReferenceIndex].Index;
+                                ref var inactiveBodySet = ref bodies.Sets[setIndex];
+                                ref var inactiveConstraintSet = ref solver.Sets[setIndex];
+                                for (int bodyIndex = 0; bodyIndex < inactiveBodySet.Count; ++bodyIndex) {
+                                    ref var location = ref bodies.HandleToLocation[inactiveBodySet.IndexToHandle[bodyIndex]];
+                                    Debug.Assert(location.SetIndex == 0, "At this point, the sleep hasn't gone through so the set should still be 0.");
+                                    constraintRemover.TryRemoveAllConstraintsForBodyFromFallbackBatch(location.Index);
+                                    bodies.RemoveFromActiveSet(location.Index);
+                                    //And now we can actually update the handle->body mapping.
+                                    location.SetIndex = setIndex;
+                                    location.Index = bodyIndex;
+                                }
                             }
                         }
                     }
