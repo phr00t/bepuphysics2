@@ -444,8 +444,8 @@ namespace BepuPhysics.Collidables
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void* GetPointer() {
-            return Unsafe.AsPointer(ref this);
+        public unsafe void CopyData(void* ptr) {
+            Buffer.MemoryCopy(Unsafe.AsPointer(ref this), ptr, sizeof(Mesh), sizeof(Mesh));
         }
 
         /// <summary>
