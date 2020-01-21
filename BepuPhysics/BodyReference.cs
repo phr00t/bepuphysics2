@@ -1,5 +1,4 @@
 ﻿using BepuPhysics.Collidables;
-using BepuPhysics.Threading;
 using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
@@ -46,10 +45,7 @@ namespace BepuPhysics
             {
                 if (Bodies == null)
                     return false;
-
-                using (Bodies.bodyLocker.WriteLock()) {
-                    return Bodies.BodyExists(Handle);
-                }
+                return Bodies.BodyExists(Handle);
             }
         }
 
@@ -73,11 +69,7 @@ namespace BepuPhysics
         public bool Awake
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    return Location.SetIndex == 0;
-                }
-            }
+            get { return Location.SetIndex == 0; }
             set
             {
                 if (Awake)
@@ -100,156 +92,65 @@ namespace BepuPhysics
         /// <summary>
         /// Gets a reference to the body's velocity.
         /// </summary>
-        public BodyVelocity Velocity
+        public ref BodyVelocity Velocity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    return Bodies.Sets[location.SetIndex].Velocities[location.Index];
-                }
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    Bodies.Sets[location.SetIndex].Velocities[location.Index] = value;
-                }
-            }
-        }
-
-        public void SetLinearVelocity(Vector3 v) {
-            using (Bodies.bodyLocker.WriteLock()) {
                 ref var location = ref Location;
-                Bodies.Sets[location.SetIndex].Velocities[location.Index].Linear = v;
-            }
-        }
-
-        public void SetAngularVelocity(Vector3 v) {
-            using (Bodies.bodyLocker.WriteLock()) {
-                ref var location = ref Location;
-                Bodies.Sets[location.SetIndex].Velocities[location.Index].Angular = v;
+                return ref Bodies.Sets[location.SetIndex].Velocities[location.Index];
             }
         }
 
         /// <summary>
         /// Gets a reference to the body's pose.
         /// </summary>
-        public RigidPose Pose
+        public ref RigidPose Pose
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    return Bodies.Sets[location.SetIndex].Poses[location.Index];
-                }
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    Bodies.Sets[location.SetIndex].Poses[location.Index] = value;
-                }
-            }
-        }
-
-        public void SetPosition(Vector3 v) {
-            using (Bodies.bodyLocker.WriteLock()) {
                 ref var location = ref Location;
-                Bodies.Sets[location.SetIndex].Poses[location.Index].Position = v;
-            }
-        }
-
-        public void SetRotation(BepuUtilities.Quaternion q) {
-            using (Bodies.bodyLocker.WriteLock()) {
-                ref var location = ref Location;
-                Bodies.Sets[location.SetIndex].Poses[location.Index].Orientation = q;
+                return ref Bodies.Sets[location.SetIndex].Poses[location.Index];
             }
         }
 
         /// <summary>
         /// Gets a reference to the body's collidable.
         /// </summary>
-        public Collidable Collidable
+        public ref Collidable Collidable
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    return Bodies.Sets[location.SetIndex].Collidables[location.Index];
-                }
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    Bodies.Sets[location.SetIndex].Collidables[location.Index] = value;
-                }
-            }
-        }
-
-        public void SetCollidable(CollidableDescription cd) {
-            using (Bodies.bodyLocker.WriteLock()) {
                 ref var location = ref Location;
-                ref var coll = ref Bodies.Sets[location.SetIndex].Collidables[location.Index];
-                coll.Continuity = cd.Continuity;
-                coll.SpeculativeMargin = cd.SpeculativeMargin;
+                return ref Bodies.Sets[location.SetIndex].Collidables[location.Index];
             }
         }
 
         /// <summary>
         /// Gets a reference to the body's local inertia.
         /// </summary>
-        public BodyInertia LocalInertia
+        public ref BodyInertia LocalInertia
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    return Bodies.Sets[location.SetIndex].LocalInertias[location.Index];
-                }
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    Bodies.Sets[location.SetIndex].LocalInertias[location.Index] = value;
-                }
+                ref var location = ref Location;
+                return ref Bodies.Sets[location.SetIndex].LocalInertias[location.Index];
             }
         }
 
         /// <summary>
         /// Gets a reference to the body's activity state.
         /// </summary>
-        public BodyActivity Activity
+        public ref BodyActivity Activity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    return Bodies.Sets[location.SetIndex].Activity[location.Index];
-                }
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set {
-                using (Bodies.bodyLocker.WriteLock()) {
-                    ref var location = ref Location;
-                    Bodies.Sets[location.SetIndex].Activity[location.Index] = value;
-                }
-            }
-        }
-
-        public void SetActivity(BodyActivityDescription ba) {
-            using (Bodies.bodyLocker.WriteLock()) {
                 ref var location = ref Location;
-                ref var act = ref Bodies.Sets[location.SetIndex].Activity[location.Index];
-                act.MinimumTimestepsUnderThreshold = ba.MinimumTimestepCountUnderThreshold;
-                act.SleepThreshold = ba.SleepThreshold;
+                return ref Bodies.Sets[location.SetIndex].Activity[location.Index];
             }
         }
 
@@ -304,13 +205,11 @@ namespace BepuPhysics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ComputeInverseInertia(out Symmetric3x3 inverseInertia)
         {
-            using (Bodies.bodyLocker.WriteLock()) {
-                ref var location = ref Location;
-                ref var set = ref Bodies.Sets[Location.SetIndex];
-                ref var localInertia = ref set.LocalInertias[location.Index];
-                ref var pose = ref set.Poses[location.Index];
-                PoseIntegration.RotateInverseInertia(localInertia.InverseInertiaTensor, pose.Orientation, out inverseInertia);
-            }
+            ref var location = ref Location;
+            ref var set = ref Bodies.Sets[Location.SetIndex];
+            ref var localInertia = ref set.LocalInertias[location.Index];
+            ref var pose = ref set.Poses[location.Index];
+            PoseIntegration.RotateInverseInertia(localInertia.InverseInertiaTensor, pose.Orientation, out inverseInertia);
         }
 
         /// <summary>
@@ -319,9 +218,7 @@ namespace BepuPhysics
         /// <param name="description">Description of the body.</param>
         public void GetDescription(out BodyDescription description)
         {
-            using (Bodies.bodyLocker.WriteLock()) {
-                Bodies.GetDescription(Handle, out description);
-            }
+            Bodies.GetDescription(Handle, out description);
         }
 
         /// <summary>
@@ -331,9 +228,7 @@ namespace BepuPhysics
         /// <param name="description">Description of the body.</param>
         public void ApplyDescription(in BodyDescription description)
         {
-            using (Bodies.bodyLocker.WriteLock()) {
-                Bodies.ApplyDescription(Handle, description);
-            }
+            Bodies.ApplyDescription(Handle, description);
         }
 
         /// <summary>
@@ -342,9 +237,7 @@ namespace BepuPhysics
         /// <param name="newShape">Index of the new shape to use for the body.</param>
         public void SetShape(TypedIndex newShape)
         {
-            using (Bodies.bodyLocker.WriteLock()) {
-                Bodies.SetShape(Handle, newShape);
-            }
+            Bodies.SetShape(Handle, newShape);
         }
 
         /// <summary>
@@ -413,10 +306,8 @@ namespace BepuPhysics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ApplyImpulse(in Vector3 impulse, in Vector3 impulseOffset)
         {
-            using (Bodies.bodyLocker.WriteLock()) {
-                ref var location = ref Location;
-                ApplyImpulse(Bodies.Sets[location.SetIndex], location.Index, impulse, impulseOffset);
-            }
+            ref var location = ref Location;
+            ApplyImpulse(Bodies.Sets[location.SetIndex], location.Index, impulse, impulseOffset);
         }
 
         /// <summary>
@@ -426,11 +317,9 @@ namespace BepuPhysics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ApplyLinearImpulse(in Vector3 impulse)
         {
-            using (Bodies.bodyLocker.WriteLock()) {
-                ref var location = ref Location;
-                ref var set = ref Bodies.Sets[location.SetIndex];
-                ApplyLinearImpulse(impulse, set.LocalInertias[location.Index].InverseMass, ref set.Velocities[location.Index].Linear);
-            }
+            ref var location = ref Location;
+            ref var set = ref Bodies.Sets[location.SetIndex];
+            ApplyLinearImpulse(impulse, set.LocalInertias[location.Index].InverseMass, ref set.Velocities[location.Index].Linear);
         }
 
         /// <summary>
@@ -451,14 +340,12 @@ namespace BepuPhysics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ApplyAngularImpulse(in Vector3 angularImpulse)
         {
-            using (Bodies.bodyLocker.WriteLock()) {
-                ref var location = ref Location;
-                ref var set = ref Bodies.Sets[location.SetIndex];
-                ref var localInertia = ref set.LocalInertias[location.Index];
-                ref var pose = ref set.Poses[location.Index];
-                PoseIntegration.RotateInverseInertia(localInertia.InverseInertiaTensor, pose.Orientation, out var inverseInertia);
-                ApplyAngularImpulse(angularImpulse, inverseInertia, ref set.Velocities[location.Index].Angular);
-            }
+            ref var location = ref Location;
+            ref var set = ref Bodies.Sets[location.SetIndex];
+            ref var localInertia = ref set.LocalInertias[location.Index];
+            ref var pose = ref set.Poses[location.Index];
+            PoseIntegration.RotateInverseInertia(localInertia.InverseInertiaTensor, pose.Orientation, out var inverseInertia);
+            ApplyAngularImpulse(angularImpulse, inverseInertia, ref set.Velocities[location.Index].Angular);
         }
     }
 }

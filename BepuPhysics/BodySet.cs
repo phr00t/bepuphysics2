@@ -5,7 +5,6 @@ using BepuPhysics.Collidables;
 using BepuUtilities.Collections;
 using System;
 using BepuUtilities;
-using BepuPhysics.Threading;
 
 namespace BepuPhysics
 {
@@ -225,15 +224,13 @@ namespace BepuPhysics
             //You may want to change this in the future if memory use is concerning.
             targetBodyCapacity = BufferPool.GetCapacityForCount<int>(targetBodyCapacity);
             Debug.Assert(Poses.Length != BufferPool.GetCapacityForCount<RigidPoses>(targetBodyCapacity), "Should not try to use internal resize of the result won't change the size.");
-            using (Bodies.bodyLocker.ReadLock()) {
-                pool.ResizeToAtLeast(ref Poses, targetBodyCapacity, Count);
-                pool.ResizeToAtLeast(ref Velocities, targetBodyCapacity, Count);
-                pool.ResizeToAtLeast(ref LocalInertias, targetBodyCapacity, Count);
-                pool.ResizeToAtLeast(ref IndexToHandle, targetBodyCapacity, Count);
-                pool.ResizeToAtLeast(ref Collidables, targetBodyCapacity, Count);
-                pool.ResizeToAtLeast(ref Activity, targetBodyCapacity, Count);
-                pool.ResizeToAtLeast(ref Constraints, targetBodyCapacity, Count);
-            }
+            pool.ResizeToAtLeast(ref Poses, targetBodyCapacity, Count);
+            pool.ResizeToAtLeast(ref Velocities, targetBodyCapacity, Count);
+            pool.ResizeToAtLeast(ref LocalInertias, targetBodyCapacity, Count);
+            pool.ResizeToAtLeast(ref IndexToHandle, targetBodyCapacity, Count);
+            pool.ResizeToAtLeast(ref Collidables, targetBodyCapacity, Count);
+            pool.ResizeToAtLeast(ref Activity, targetBodyCapacity, Count);
+            pool.ResizeToAtLeast(ref Constraints, targetBodyCapacity, Count);
         }
 
         public unsafe void Clear(BufferPool pool)

@@ -7,8 +7,6 @@ using BepuPhysics.Constraints;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuUtilities;
-using System.Threading;
-using BepuPhysics.Threading;
 
 namespace BepuPhysics
 {
@@ -30,8 +28,6 @@ namespace BepuPhysics
     /// </summary>
     public class Bodies
     {
-        internal static ReaderWriterLockSlim bodyLocker = new ReaderWriterLockSlim();
-
         /// <summary>
         /// Remaps a body handle to the actual array index of the body.
         /// The backing array index may change in response to cache optimization.
@@ -1191,10 +1187,9 @@ namespace BepuPhysics
             if (newCapacity != HandleToLocation.Length)
             {
                 var oldCapacity = HandleToLocation.Length;
-                using (bodyLocker.ReadLock()) {
-                    Pool.ResizeToAtLeast(ref HandleToLocation, newCapacity, Math.Min(oldCapacity, newCapacity));
-                }
-                if (HandleToLocation.Length > oldCapacity) {
+                Pool.ResizeToAtLeast(ref HandleToLocation, newCapacity, Math.Min(oldCapacity, newCapacity));
+                if (HandleToLocation.Length > oldCapacity)
+                {
                     Unsafe.InitBlockUnaligned(
                       ((BodyLocation*)HandleToLocation.Memory) + oldCapacity, 0xFF,
                       (uint)(sizeof(BodyLocation) * (HandleToLocation.Length - oldCapacity)));

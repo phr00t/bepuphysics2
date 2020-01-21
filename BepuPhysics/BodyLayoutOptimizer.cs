@@ -8,7 +8,6 @@ using System.Threading;
 using BepuUtilities;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
-using BepuPhysics.Threading;
 
 namespace BepuPhysics
 {
@@ -95,9 +94,7 @@ namespace BepuPhysics
                     //Note that graph.EnumerateConnectedBodies explicitly excludes the body whose constraints we are enumerating, 
                     //so we don't have to worry about having the rug pulled by this list swap.
                     //(Also, !(x > x) for many values of x.)
-                    using (Bodies.bodyLocker.ReadLock()) {
-                        SwapBodyLocation(bodies, solver, connectedBodyIndex, newLocationIndex);
-                    }
+                    SwapBodyLocation(bodies, solver, connectedBodyIndex, newLocationIndex);
                 }
             }
         }

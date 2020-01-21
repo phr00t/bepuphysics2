@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BepuPhysics.CollisionDetection;
 using BepuUtilities;
-using BepuPhysics.Threading;
 
 namespace BepuPhysics
 {
@@ -1180,9 +1179,7 @@ namespace BepuPhysics
             if (Sets.Length != setsCapacity)
             {
                 var oldCapacity = Sets.Length;
-                using (Bodies.bodyLocker.ReadLock()) {
-                    pool.ResizeToAtLeast(ref Sets, setsCapacity, potentiallyAllocatedCount);
-                }
+                pool.ResizeToAtLeast(ref Sets, setsCapacity, potentiallyAllocatedCount);
                 if (oldCapacity < Sets.Length)
                     Sets.Clear(oldCapacity, Sets.Length - oldCapacity); //We rely on unused slots being default initialized.
             }
