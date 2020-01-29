@@ -14,6 +14,9 @@
     <LangVersion>latest</LangVersion>
     <PackageTags>physics;3d;rigid body;real time;simulation</PackageTags>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+    <StartupObject />
   </PropertyGroup>
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
