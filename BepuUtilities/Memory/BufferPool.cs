@@ -102,8 +102,8 @@ namespace BepuUtilities.Memory
             /// Pool of slots available to this power level.
             /// </summary>
             public ManagedIdPool Slots;
-#if DEBUG
             internal HashSet<int> outstandingIds;
+#if DEBUG
 #if LEAKDEBUG
             internal Dictionary<string, HashSet<int>> outstandingAllocators;
 #endif
@@ -131,8 +131,8 @@ namespace BepuUtilities.Memory
                 Blocks = new Block[1];
                 BlockCount = 0;
 
-#if DEBUG
                 outstandingIds = new HashSet<int>();
+#if DEBUG
 #if LEAKDEBUG
                 outstandingAllocators = new Dictionary<string, HashSet<int>>();
 #endif
@@ -185,12 +185,13 @@ namespace BepuUtilities.Memory
 
                 var indexInBlock = slot & SuballocationsPerBlockMask;
                 buffer = new RawBuffer(Blocks[blockIndex].Allocate(indexInBlock, SuballocationSize), SuballocationSize, (Power << IdPowerShift) | slot);
-                Debug.Assert(buffer.Id >= 0 && Power >= 0 && Power < 32, "Slot/power should be safely encoded in a 32 bit integer.");
+                if (outstandingIds.Add(slot) == false)
+                    throw new ArgumentException("Requesting slot " + slot + " twice in BepuPhysics BufferPool!");
 #if DEBUG
+                Debug.Assert(buffer.Id >= 0 && Power >= 0 && Power < 32, "Slot/power should be safely encoded in a 32 bit integer.");
                 const int maximumOutstandingCount = 1 << 20;
                 Debug.Assert(outstandingIds.Count <= maximumOutstandingCount,
                     $"Do you actually truly really need to have {maximumOutstandingCount} allocations taken from this power pool, or is this a memory leak?");
-                Debug.Assert(outstandingIds.Add(slot), "Should not be able to request the same slot twice.");
 #if LEAKDEBUG
                 var allocator = new StackTrace().ToString();
                 if (!outstandingAllocators.TryGetValue(allocator, out var idsForAllocator))
@@ -226,9 +227,8 @@ namespace BepuUtilities.Memory
 
             public unsafe void Return(int slotIndex)
             {
+                if (outstandingIds.Remove(slotIndex) == false) return;
 #if DEBUG 
-                Debug.Assert(outstandingIds.Remove(slotIndex),
-                    "This buffer id must have been taken from the pool previously.");
 #if LEAKDEBUG
                 bool found = false;
                 foreach (var pair in outstandingAllocators)
@@ -251,9 +251,9 @@ namespace BepuUtilities.Memory
 
             public void Clear()
             {
-#if DEBUG
                 //We'll assume that the caller understands that the outstanding buffers are invalidated, so should not be returned again.
                 outstandingIds.Clear();
+#if DEBUG
 #if LEAKDEBUG
                 outstandingAllocators.Clear();
 #endif

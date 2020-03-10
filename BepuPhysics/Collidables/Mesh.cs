@@ -4,9 +4,12 @@ using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading;
+
 namespace BepuPhysics.Collidables
 {
     public unsafe struct ShapeTreeOverlapEnumerator<TSubpairOverlaps> : IBreakableForEach<int> where TSubpairOverlaps : ICollisionTaskSubpairOverlaps
@@ -34,8 +37,11 @@ namespace BepuPhysics.Collidables
     /// <summary>
     /// Shape designed to contain a whole bunch of triangles. Triangle collisions and ray tests are one-sided; only tests which see the triangle as wound clockwise will generate contacts.
     /// </summary>
-    public struct Mesh : IHomogeneousCompoundShape<Triangle, TriangleWide>
+    public struct Mesh : IHomogeneousCompoundShape<Triangle, TriangleWide>, IEquatable<Mesh>
     {
+        internal static ConcurrentDictionary<int, BufferPool> poolMap = new ConcurrentDictionary<int, BufferPool>();
+        internal static int uniqueGlobalIndex = int.MinValue;
+
         /// <summary>
         /// Acceleration structure of the mesh.
         /// </summary>
@@ -46,6 +52,7 @@ namespace BepuPhysics.Collidables
         public Buffer<Triangle> Triangles;
         internal Vector3 scale;
         internal Vector3 inverseScale;
+        internal int myUniqueIndex;
         /// <summary>
         /// Gets or sets the scale of the mesh.
         /// </summary>
@@ -74,6 +81,8 @@ namespace BepuPhysics.Collidables
         /// <param name="pool">Pool used to allocate acceleration structures.</param>
         public Mesh(Buffer<Triangle> triangles, Vector3 scale, BufferPool pool) : this()
         {
+            myUniqueIndex = Interlocked.Increment(ref uniqueGlobalIndex) - 1;
+            poolMap[myUniqueIndex] = pool;
             Triangles = triangles;
             Tree = new Tree(pool, triangles.Length);
             pool.Take<BoundingBox>(triangles.Length, out var boundingBoxes);
@@ -412,13 +421,22 @@ namespace BepuPhysics.Collidables
         }
 
         /// <summary>
-        /// Returns the mesh's resources to a buffer pool.
+        /// Returns the mesh's resources to its buffer pool.
         /// </summary>
-        /// <param name="bufferPool">Pool to return the mesh's resources to.</param>
+        /// <param name="bufferPool">Pool to return the mesh's resources to.</par am>
         public void Dispose(BufferPool bufferPool)
         {
             bufferPool.Return(ref Triangles);
             Tree.Dispose(bufferPool);
+            poolMap.TryRemove(myUniqueIndex, out _);
+        }
+
+        public bool Dispose() {
+            if (poolMap.TryGetValue(myUniqueIndex, out var bufferPool)) {
+                Dispose(bufferPool);
+                return true;
+            }
+            return false;
         }
 
         public void ComputeInertia(float mass, out BodyInertia bi) {
@@ -445,6 +463,23 @@ namespace BepuPhysics.Collidables
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void CopyData(void* ptr) {
             Buffer.MemoryCopy(Unsafe.AsPointer(ref this), ptr, sizeof(Mesh), sizeof(Mesh));
+        }
+
+        public bool Equals(Mesh other) {
+            return other.myUniqueIndex == myUniqueIndex;
+        }
+
+        public override int GetHashCode() {
+            return myUniqueIndex;
+        }
+
+        public override bool Equals(object obj) {
+            if (obj is Mesh m) return m.myUniqueIndex == myUniqueIndex;
+            return false;
+        }
+
+        public override string ToString() {
+            return "Mesh #" + myUniqueIndex;
         }
 
         /// <summary>
