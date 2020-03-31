@@ -433,7 +433,9 @@ namespace BepuPhysics.Collidables
 
         public bool Dispose() {
             if (poolMap.TryGetValue(myUniqueIndex, out var bufferPool)) {
-                Dispose(bufferPool);
+                lock (bufferPool) {
+                    Dispose(bufferPool);
+                }
                 return true;
             }
             return false;
