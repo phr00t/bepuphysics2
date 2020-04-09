@@ -39,9 +39,6 @@ namespace BepuPhysics.Collidables
     /// </summary>
     public struct Mesh : IHomogeneousCompoundShape<Triangle, TriangleWide>, IEquatable<Mesh>
     {
-        internal static ConcurrentDictionary<int, BufferPool> poolMap = new ConcurrentDictionary<int, BufferPool>();
-        internal static int uniqueGlobalIndex = int.MinValue;
-
         /// <summary>
         /// Acceleration structure of the mesh.
         /// </summary>
@@ -81,8 +78,6 @@ namespace BepuPhysics.Collidables
         /// <param name="pool">Pool used to allocate acceleration structures.</param>
         public Mesh(Buffer<Triangle> triangles, in Vector3 scale, BufferPool pool) : this()
         {
-            myUniqueIndex = Interlocked.Increment(ref uniqueGlobalIndex) - 1;
-            poolMap[myUniqueIndex] = pool;
             Triangles = triangles;
             Tree = new Tree(pool, triangles.Length);
             pool.Take<BoundingBox>(triangles.Length, out var boundingBoxes);
@@ -475,17 +470,6 @@ namespace BepuPhysics.Collidables
         {
             bufferPool.Return(ref Triangles);
             Tree.Dispose(bufferPool);
-            poolMap.TryRemove(myUniqueIndex, out _);
-        }
-
-        public bool Dispose() {
-            if (poolMap.TryGetValue(myUniqueIndex, out var bufferPool)) {
-                lock (bufferPool) {
-                    Dispose(bufferPool);
-                }
-                return true;
-            }
-            return false;
         }
 
         public void ComputeInertia(float mass, out BodyInertia bi) {
