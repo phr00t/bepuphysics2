@@ -11,7 +11,7 @@ namespace BepuPhysics
     //You could bitpack these two into 4 bytes, but the value of that is pretty darn questionable.
     public struct BodyConstraintReference
     {
-        public int ConnectingConstraintHandle;
+        public ConstraintHandle ConnectingConstraintHandle;
         public int BodyIndexInConstraint;
     }
 
@@ -33,7 +33,7 @@ namespace BepuPhysics
         /// <summary>
         /// Remaps a body index to its handle.
         /// </summary>
-        public Buffer<int> IndexToHandle;
+        public Buffer<BodyHandle> IndexToHandle;
 
         public Buffer<RigidPose> Poses;
         public Buffer<BodyVelocity> Velocities;
@@ -64,7 +64,7 @@ namespace BepuPhysics
             InternalResize(initialCapacity, pool);
         }
 
-        internal int Add(in BodyDescription bodyDescription, int handle, int minimumConstraintCapacity, BufferPool pool)
+        internal int Add(in BodyDescription bodyDescription, BodyHandle handle, int minimumConstraintCapacity, BufferPool pool)
         {
             var index = Count;
             if (index == IndexToHandle.Length)
@@ -79,7 +79,7 @@ namespace BepuPhysics
             return index;
         }
 
-        internal bool RemoveAt(int bodyIndex, BufferPool pool, out int handle, out int movedBodyIndex, out int movedBodyHandle)
+        internal bool RemoveAt(int bodyIndex, out BodyHandle handle, out int movedBodyIndex, out BodyHandle movedBodyHandle)
         {
             handle = IndexToHandle[bodyIndex];
             //Move the last body into the removed slot.
@@ -106,13 +106,26 @@ namespace BepuPhysics
             else
             {
                 movedBodyIndex = -1;
-                movedBodyHandle = -1;
+                movedBodyHandle = new BodyHandle(-1);
             }
             return bodyMoved;
         }
 
         internal void ApplyDescriptionByIndex(int index, in BodyDescription description)
         {
+            Debug.Assert(!MathChecker.IsInvalid(description.Pose.Position.LengthSquared()), $"Invalid body position: {description.Pose.Position}");
+            Debug.Assert(Math.Abs(1 - description.Pose.Orientation.LengthSquared()) < 1e-3f, $"Body orientation not unit length: {description.Pose.Orientation}");
+            Debug.Assert(!MathChecker.IsInvalid(description.Velocity.Linear.LengthSquared()), $"Invalid body linear velocity: {description.Velocity.Linear}");
+            Debug.Assert(!MathChecker.IsInvalid(description.Velocity.Angular.LengthSquared()), $"Invalid body angular velocity: {description.Velocity.Angular}");
+            Debug.Assert(!MathChecker.IsInvalid(
+                description.LocalInertia.InverseInertiaTensor.XX * description.LocalInertia.InverseInertiaTensor.XX +
+                description.LocalInertia.InverseInertiaTensor.YX * description.LocalInertia.InverseInertiaTensor.YX +
+                description.LocalInertia.InverseInertiaTensor.YY * description.LocalInertia.InverseInertiaTensor.YY +
+                description.LocalInertia.InverseInertiaTensor.ZX * description.LocalInertia.InverseInertiaTensor.ZX +
+                description.LocalInertia.InverseInertiaTensor.ZY * description.LocalInertia.InverseInertiaTensor.ZY +
+                description.LocalInertia.InverseInertiaTensor.ZZ * description.LocalInertia.InverseInertiaTensor.ZZ), $"Invalid body inverse inertia tensor: {description.LocalInertia.InverseInertiaTensor}");
+            Debug.Assert(!MathChecker.IsInvalid(description.LocalInertia.InverseMass) && description.LocalInertia.InverseMass >= 0, $"Invalid body inverse mass: {description.LocalInertia.InverseMass}");
+
             Poses[index] = description.Pose;
             Velocities[index] = description.Velocity;
             LocalInertias[index] = description.LocalInertia;
@@ -144,7 +157,7 @@ namespace BepuPhysics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AddConstraint(int bodyIndex, int constraintHandle, int bodyIndexInConstraint, BufferPool pool)
+        internal void AddConstraint(int bodyIndex, ConstraintHandle constraintHandle, int bodyIndexInConstraint, BufferPool pool)
         {
             BodyConstraintReference constraint;
             constraint.ConnectingConstraintHandle = constraintHandle;
@@ -157,7 +170,7 @@ namespace BepuPhysics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void RemoveConstraintReference(int bodyIndex, int constraintHandle, int minimumConstraintCapacityPerBody, BufferPool pool)
+        internal void RemoveConstraintReference(int bodyIndex, ConstraintHandle constraintHandle, int minimumConstraintCapacityPerBody, BufferPool pool)
         {
             //This uses a linear search. That's fine; bodies will rarely have more than a handful of constraints associated with them.
             //Attempting to use something like a hash set for fast removes would just introduce more constant overhead and slow it down on average.
@@ -165,7 +178,7 @@ namespace BepuPhysics
             for (int i = 0; i < list.Count; ++i)
             {
                 ref var element = ref list[i];
-                if (element.ConnectingConstraintHandle == constraintHandle)
+                if (element.ConnectingConstraintHandle.Value == constraintHandle.Value)
                 {
                     list.FastRemoveAt(i);
                     break;
@@ -184,12 +197,12 @@ namespace BepuPhysics
             }
         }
 
-        public bool BodyIsConstrainedBy(int bodyIndex, int constraintHandle)
+        public bool BodyIsConstrainedBy(int bodyIndex, ConstraintHandle constraintHandle)
         {
             ref var list = ref Constraints[bodyIndex];
             for (int i = 0; i < list.Count; ++i)
             {
-                if (list[i].ConnectingConstraintHandle == constraintHandle)
+                if (list[i].ConnectingConstraintHandle.Value == constraintHandle.Value)
                 {
                     return true;
                 }
@@ -204,10 +217,10 @@ namespace BepuPhysics
         /// <param name="slotA">Memory slot of the first body to swap.</param>
         /// <param name="slotB">Memory slot of the second body to swap.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Swap(int slotA, int slotB, ref Buffer<BodyLocation> handleToIndex)
+        internal void Swap(int slotA, int slotB, ref Buffer<BodyMemoryLocation> handleToIndex)
         {
-            handleToIndex[IndexToHandle[slotA]].Index = slotB;
-            handleToIndex[IndexToHandle[slotB]].Index = slotA;
+            handleToIndex[IndexToHandle[slotA].Value].Index = slotB;
+            handleToIndex[IndexToHandle[slotB].Value].Index = slotA;
             Helpers.Swap(ref IndexToHandle[slotA], ref IndexToHandle[slotB]);
             Helpers.Swap(ref Collidables[slotA], ref Collidables[slotB]);
             Helpers.Swap(ref Poses[slotA], ref Poses[slotB]);

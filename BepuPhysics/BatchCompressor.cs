@@ -73,7 +73,7 @@ namespace BepuPhysics
         }
         struct Compression
         {
-            public int ConstraintHandle;
+            public ConstraintHandle ConstraintHandle;
             public int TargetBatch;
         }
         struct AnalysisRegion
@@ -138,6 +138,7 @@ namespace BepuPhysics
             ActiveConstraintBodyHandleCollector handleAccumulator;
             handleAccumulator.Bodies = Bodies;
             handleAccumulator.Handles = bodyHandles;
+            var bodyHandlesSpan = new Span<int>(bodyHandles, bodiesPerConstraint);
             for (int i = region.StartIndexInTypeBatch; i < region.EndIndexInTypeBatch; ++i)
             {
                 //Check if this constraint can be removed.
@@ -146,7 +147,7 @@ namespace BepuPhysics
                 for (int batchIndex = 0; batchIndex < nextBatchIndex; ++batchIndex)
                 {
                     //The batch index will never be the fallback batch, since the fallback batch is the very last batch (if it exists at all). So uses batch referenced handles is safe.
-                    if (Solver.batchReferencedHandles[batchIndex].CanFit(ref *bodyHandles, bodiesPerConstraint))
+                    if (Solver.batchReferencedHandles[batchIndex].CanFit(bodyHandlesSpan))
                     {
                         compressions.Add(new Compression { ConstraintHandle = typeBatch.IndexToHandle[i], TargetBatch = batchIndex }, pool);
                         break;
@@ -159,14 +160,14 @@ namespace BepuPhysics
         {
             public ushort WorkerIndex;
             public ushort Index;
-            public int ConstraintHandle;
+            public ConstraintHandle ConstraintHandle;
         }
         struct CompressionComparer : IComparerRef<CompressionTarget>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int Compare(ref CompressionTarget a, ref CompressionTarget b)
             {
-                return a.ConstraintHandle.CompareTo(b.ConstraintHandle);
+                return a.ConstraintHandle.Value.CompareTo(b.ConstraintHandle.Value);
             }
         }
 
@@ -174,7 +175,7 @@ namespace BepuPhysics
         private unsafe void ApplyCompression(int sourceBatchIndex, ref ConstraintBatch sourceBatch, ref Compression compression)
         {
             //Careful here: this is a reference for the sake of not doing pointless copies, but you cannot rely on it having the same values after the completion of the transfer.
-            ref var constraintLocation = ref Solver.HandleToConstraint[compression.ConstraintHandle];
+            ref var constraintLocation = ref Solver.HandleToConstraint[compression.ConstraintHandle.Value];
             var typeProcessor = Solver.TypeProcessors[constraintLocation.TypeId];
             if (sourceBatchIndex == Solver.FallbackBatchThreshold)
             {
@@ -187,7 +188,7 @@ namespace BepuPhysics
                 handleAccumulator.Handles = bodyHandles;
                 handleAccumulator.Index = 0;
                 Solver.EnumerateConnectedBodies(compression.ConstraintHandle, ref handleAccumulator);
-                if (!Solver.batchReferencedHandles[compression.TargetBatch].CanFit(ref *bodyHandles, typeProcessor.BodiesPerConstraint))
+                if (!Solver.batchReferencedHandles[compression.TargetBatch].CanFit(new Span<int>(bodyHandles, typeProcessor.BodiesPerConstraint)))
                 {
                     //Another compression from the fallback batch has blocked this compression.
                     //Note that this isn't really a problem- batch compression is an incremental process. If some other compression was possible, a future frame will find it pretty quickly.

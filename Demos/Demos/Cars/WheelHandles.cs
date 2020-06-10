@@ -1,11 +1,13 @@
-﻿namespace Demos.Demos.Cars
+﻿using BepuPhysics;
+
+namespace Demos.Demos.Cars
 {
     struct WheelHandles
     {
-        public int Wheel;
-        public int SuspensionSpring;
-        public int SuspensionTrack;
-        public int Hinge;
-        public int Motor;
+        public BodyHandle Wheel;
+        public ConstraintHandle SuspensionSpring;
+        public ConstraintHandle SuspensionTrack;
+        public ConstraintHandle Hinge;
+        public ConstraintHandle Motor;
     }
 }

@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace BepuPhysics.Trees
 {
@@ -14,16 +15,16 @@ namespace BepuPhysics.Trees
         public unsafe void RefitForNodeBoundsChange(int nodeIndex)
         {
             //Note that no attempt is made to refit the root node. Note that the root node is the only node that can have a number of children less than 2.
-            var node = nodes + nodeIndex;
-            var metanode = metanodes + nodeIndex;
-            while (metanode->Parent >= 0)
+            ref var node = ref Nodes[nodeIndex];
+            ref var metanode = ref Metanodes[nodeIndex];
+            while (metanode.Parent >= 0)
             {
                 //Compute the new bounding box for this node.
-                var parent = nodes + metanode->Parent;
-                ref var childInParent = ref (&parent->A)[metanode->IndexInParent];
-                BoundingBox.CreateMerged(node->A.Min, node->A.Max, node->B.Min, node->B.Max, out childInParent.Min, out childInParent.Max);
-                node = parent;
-                metanode = metanodes + metanode->Parent;
+                ref var parent = ref Nodes[metanode.Parent];
+                ref var childInParent = ref Unsafe.Add(ref parent.A, metanode.IndexInParent);
+                BoundingBox.CreateMerged(node.A.Min, node.A.Max, node.B.Min, node.B.Max, out childInParent.Min, out childInParent.Max);
+                node = ref parent;
+                metanode = ref Metanodes[metanode.Parent];
             }
         }
 
@@ -33,28 +34,28 @@ namespace BepuPhysics.Trees
         unsafe void Refit(int nodeIndex, out Vector3 min, out Vector3 max)
         {
             Debug.Assert(leafCount >= 2);
-            var node = nodes + nodeIndex;
-            ref var a = ref node->A;
-            if (node->A.Index >= 0)
+            ref var node = ref Nodes[nodeIndex];
+            ref var a = ref node.A;
+            if (node.A.Index >= 0)
             {
                 Refit(a.Index, out a.Min, out a.Max);
             }
-            ref var b = ref node->B;
+            ref var b = ref node.B;
             if (b.Index >= 0)
             {
                 Refit(b.Index, out b.Min, out b.Max);
             }
             BoundingBox.CreateMerged(a.Min, a.Max, b.Min, b.Max, out min, out max);
         }
-        
+
         public unsafe void Refit()
         {
             //No point in refitting a tree with no internal nodes!
             if (leafCount <= 2)
                 return;
             Refit(0, out var rootMin, out var rootMax);
-        }       
-        
+        }
+
 
 
     }

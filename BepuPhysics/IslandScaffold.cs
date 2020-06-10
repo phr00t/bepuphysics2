@@ -3,6 +3,7 @@ using BepuUtilities.Memory;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BepuUtilities;
+using System;
 
 namespace BepuPhysics
 {
@@ -75,9 +76,9 @@ namespace BepuPhysics
             }
         }
 
-        public unsafe bool TryAdd(int constraintHandle, int batchIndex, Solver solver, BufferPool pool, ref FallbackBatch fallbackBatch)
+        public unsafe bool TryAdd(ConstraintHandle constraintHandle, int batchIndex, Solver solver, BufferPool pool, ref FallbackBatch fallbackBatch)
         {
-            ref var constraintLocation = ref solver.HandleToConstraint[constraintHandle];
+            ref var constraintLocation = ref solver.HandleToConstraint[constraintHandle.Value];
             var typeProcessor = solver.TypeProcessors[constraintLocation.TypeId];
             var bodiesPerConstraint = typeProcessor.BodiesPerConstraint;
             var bodyIndices = stackalloc int[bodiesPerConstraint];
@@ -88,11 +89,11 @@ namespace BepuPhysics
                 ref solver.ActiveSet.Batches[constraintLocation.BatchIndex].GetTypeBatch(constraintLocation.TypeId),
                 constraintLocation.IndexInTypeBatch,
                 ref enumerator);
-            if (batchIndex == solver.FallbackBatchThreshold || ReferencedBodyIndices.CanFit(ref enumerator.BodyIndices[0], bodiesPerConstraint))
+            if (batchIndex == solver.FallbackBatchThreshold || ReferencedBodyIndices.CanFit(new Span<int>(enumerator.BodyIndices, bodiesPerConstraint)))
             {
                 ref var typeBatch = ref GetOrCreateTypeBatch(constraintLocation.TypeId, solver, pool);
                 Debug.Assert(typeBatch.TypeId == constraintLocation.TypeId);
-                typeBatch.Handles.Add(constraintHandle, pool);
+                typeBatch.Handles.Add(constraintHandle.Value, pool);
                 if (batchIndex < solver.FallbackBatchThreshold)
                 {
                     for (int i = 0; i < bodiesPerConstraint; ++i)
@@ -103,12 +104,12 @@ namespace BepuPhysics
                 else
                 {
                     //This is the fallback batch, so we need to fill the fallback batch with relevant information.
-                    var bodyHandles = stackalloc int[bodiesPerConstraint];
-                    for (int i = 0; i < bodiesPerConstraint; ++i)
+                    Span<BodyHandle> bodyHandles = stackalloc BodyHandle[bodiesPerConstraint];
+                    for (int i = 0; i < bodyHandles.Length; ++i)
                     {
                         bodyHandles[i] = solver.bodies.ActiveSet.IndexToHandle[bodyIndices[i]];
                     }
-                    fallbackBatch.AllocateForInactive(constraintHandle, ref *bodyHandles, bodiesPerConstraint, solver.bodies, constraintLocation.TypeId, pool);
+                    fallbackBatch.AllocateForInactive(constraintHandle, bodyHandles, solver.bodies, constraintLocation.TypeId, pool);
                 }
                 return true;
             }
@@ -138,7 +139,7 @@ namespace BepuPhysics
         public QuickList<IslandScaffoldConstraintBatch> Protobatches;
         public FallbackBatch FallbackBatch;
 
-        public IslandScaffold(ref QuickList<int> bodyIndices, ref QuickList<int> constraintHandles, Solver solver, BufferPool pool) : this()
+        public IslandScaffold(ref QuickList<int> bodyIndices, ref QuickList<ConstraintHandle> constraintHandles, Solver solver, BufferPool pool) : this()
         {
             Debug.Assert(bodyIndices.Count > 0, "Don't be tryin' to create islands with no bodies in them! That don't make no sense.");
             //Create a copy of the body indices with just enough space to hold the island's indices. The original list will continue to be reused in the caller.
@@ -161,7 +162,7 @@ namespace BepuPhysics
             }
         }
 
-        void AddConstraint(int constraintHandle, Solver solver, BufferPool pool)
+        void AddConstraint(ConstraintHandle constraintHandle, Solver solver, BufferPool pool)
         {
             for (int batchIndex = 0; batchIndex < Protobatches.Count; ++batchIndex)
             {

@@ -146,7 +146,7 @@ namespace BepuPhysics.CollisionDetection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         unsafe void RequestAddConstraint<TDescription, TBodyHandles, TContactImpulses>(int workerIndex, int manifoldConstraintType,
             ref CollidablePair pair, PairCacheIndex constraintCacheIndex, ref TContactImpulses newImpulses,
-            ref TDescription description, TBodyHandles bodyHandles) where TDescription : IConstraintDescription<TDescription>
+            ref TDescription description, TBodyHandles bodyHandles) where TDescription : unmanaged, IConstraintDescription<TDescription>
         {
             //Note that this branch is (was?) JIT constant.
             if (typeof(TBodyHandles) != typeof(TwoBodyHandles) && typeof(TBodyHandles) != typeof(int))
@@ -161,7 +161,7 @@ namespace BepuPhysics.CollisionDetection
             ref TDescription description, TBodyHandles bodyHandles)
             where TConstraintCache : unmanaged, IPairCacheEntry
             where TCollisionCache : unmanaged, IPairCacheEntry
-            where TDescription : struct, IConstraintDescription<TDescription>
+            where TDescription : unmanaged, IConstraintDescription<TDescription>
             where TContactImpulses : unmanaged
         {
             var index = PairCache.IndexOf(ref pair);
@@ -173,7 +173,7 @@ namespace BepuPhysics.CollisionDetection
 
                 var constraintCacheIndex = pointers.ConstraintCache;
                 var oldConstraintCachePointer = PairCache.GetOldConstraintCachePointer(index);
-                var constraintHandle = *(int*)oldConstraintCachePointer;
+                var constraintHandle = *(ConstraintHandle*)oldConstraintCachePointer;
                 Solver.GetConstraintReference(constraintHandle, out var constraintReference);
                 Debug.Assert(
                     constraintReference.typeBatchPointer != null &&
@@ -201,7 +201,7 @@ namespace BepuPhysics.CollisionDetection
                     //to update the constraint cache's constraint handle. The good news is that we already have a valid constraint handle from the pre-existing constraint.
                     //It's exactly the same type, so we can just overwrite its properties without worry.
                     //Note that we rely on the constraint handle being stored in the first 4 bytes of the constraint cache.
-                    Unsafe.As<TConstraintCache, int>(ref newConstraintCache) = constraintHandle;
+                    Unsafe.As<TConstraintCache, ConstraintHandle>(ref newConstraintCache) = constraintHandle;
                     PairCache.Update(workerIndex, index, ref pointers, ref collisionCache, ref newConstraintCache);
                     //There exists a constraint and it has the same type as the manifold. Directly apply the new description and impulses.
                     Solver.ApplyDescriptionWithoutWaking(ref constraintReference, ref description);
@@ -330,14 +330,14 @@ namespace BepuPhysics.CollisionDetection
                 {
                     //Two bodies.
                     Debug.Assert(pair.A.Mobility != CollidableMobility.Static && pair.B.Mobility != CollidableMobility.Static);
-                    var bodyHandles = new TwoBodyHandles { A = pair.A.Handle, B = pair.B.Handle };
+                    var bodyHandles = new TwoBodyHandles { A = pair.A.BodyHandle.Value, B = pair.B.BodyHandle.Value };
                     UpdateConstraintForManifold(workerIndex, ref pair, ref manifold, ref collisionCache, ref pairMaterial, bodyHandles);
                 }
                 else
                 {
                     //One of the two collidables is static.
                     Debug.Assert(pair.A.Mobility != CollidableMobility.Static && pair.B.Mobility == CollidableMobility.Static);
-                    UpdateConstraintForManifold(workerIndex, ref pair, ref manifold, ref collisionCache, ref pairMaterial, pair.A.Handle);
+                    UpdateConstraintForManifold(workerIndex, ref pair, ref manifold, ref collisionCache, ref pairMaterial, pair.A.BodyHandle.Value);
                 }
                 //In the event that there are no contacts in the new manifold, the pair is left in a stale state. It will be removed by the stale removal post process. 
             }

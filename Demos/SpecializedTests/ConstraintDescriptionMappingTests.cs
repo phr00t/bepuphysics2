@@ -28,7 +28,7 @@ namespace Demos.SpecializedTests
                 Unsafe.Add(ref bytes, i) = (byte)random.Next(256);
             }
         }
-        public static void Test<T>(BufferPool pool, Random random, int constraintTypeBodyCount) where T : struct, IConstraintDescription<T>
+        public static void Test<T>(BufferPool pool, Random random, int constraintTypeBodyCount) where T : unmanaged, IConstraintDescription<T>
         {
             var simulation = Simulation.Create(pool, new DemoNarrowPhaseCallbacks(), new DemoPoseIntegratorCallbacks());
 
@@ -42,8 +42,8 @@ namespace Demos.SpecializedTests
 
             int constraintTestCount = Vector<float>.Count * 128;
 
-            int[] constraintBodyHandles = new int[constraintTypeBodyCount];
-            int[] constraintHandles = new int[constraintTestCount];
+            BodyHandle[] constraintBodyHandles = new BodyHandle[constraintTypeBodyCount];
+            ConstraintHandle[] constraintHandles = new ConstraintHandle[constraintTestCount];
             T[] sources = new T[constraintTestCount];
 
 
@@ -53,7 +53,7 @@ namespace Demos.SpecializedTests
             {
                 for (int indexInConstraint = 0; indexInConstraint < constraintTypeBodyCount; ++indexInConstraint)
                 {
-                    int bodyHandleForConstraint;
+                    BodyHandle bodyHandleForConstraint;
                     do
                     {
                         bodyHandleForConstraint = simulation.Bodies.ActiveSet.IndexToHandle[random.Next(simulation.Bodies.ActiveSet.Count)];
@@ -64,7 +64,7 @@ namespace Demos.SpecializedTests
 
                 ref var source = ref sources[constraintTestIndex];
                 FillWithRandomBytes(ref source, random);
-                constraintHandles[constraintTestIndex] = simulation.Solver.Add(ref constraintBodyHandles[0], constraintTypeBodyCount, ref source);
+                constraintHandles[constraintTestIndex] = simulation.Solver.Add(constraintBodyHandles, ref source);
 
             }
             for (int constraintTestIndex = 0; constraintTestIndex < constraintTestCount; ++constraintTestIndex)
