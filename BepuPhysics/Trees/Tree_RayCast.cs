@@ -52,8 +52,10 @@ namespace BepuPhysics.Trees
                     {
                         if (bIntersected)
                         {
-                            //Visit the earlier AABB intersection first.
-                            Debug.Assert(stackEnd < TraversalStackCapacity - 1, "At the moment, we use a fixed size stack. Until we have explicitly tracked depths, watch out for excessive depth traversals.");
+                            // make sure we are not overflowing the stack
+                            if (stackEnd >= TraversalStackCapacity - 1)
+                                stackEnd = TraversalStackCapacity - 2;
+
                             if (tA < tB)
                             {
                                 nodeIndex = node.A.Index;
