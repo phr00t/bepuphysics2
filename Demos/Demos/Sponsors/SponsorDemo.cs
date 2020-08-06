@@ -74,6 +74,7 @@ namespace Demos.Demos.Sponsors
             Add(sponsors1, "D. P.", @"Content\Sponsors\contentsluginthevoid.png", content, surface);
             Add(sponsors1, "Creative-House.org", @"Content\Sponsors\handicat.png", content, surface);
             Add(sponsors1, "vietnt", @"Content\Sponsors\raisondetre.png", content, surface);
+            Add(sponsors1, "demiurghg", @"Content\Sponsors\ifiwereatardigrade.png", content, surface);
 
             //These supporters are those who gave 50 dollars a month (or historical backers of roughly equivalent or greater total contribution).
             //They get a larger entry, a bit more text if desired, and a physically simulated entry in this demo.
@@ -101,7 +102,9 @@ namespace Demos.Demos.Sponsors
             camera.Pitch = 0.4f;
 
             characterControllers = new CharacterControllers(BufferPool);
-            Simulation = Simulation.Create(BufferPool, new CharacterNarrowphaseCallbacks(characterControllers), new DemoPoseIntegratorCallbacks(new Vector3(0, -10, 0)));
+            //Using a PositionLastTimestepper since we control the newts by velocity. Not as critical since they're kinematic and the position targets won't seek to cause undesired penetrations anyway,
+            //but it'll avoid integrating velocities into positions before the solver has a chance to intervene.
+            Simulation = Simulation.Create(BufferPool, new CharacterNarrowphaseCallbacks(characterControllers), new DemoPoseIntegratorCallbacks(new Vector3(0, -10, 0)), new PositionLastTimestepper());
 
             DemoMeshHelper.LoadModel(content, BufferPool, @"Content\newt.obj", new Vector3(-10, 10, -10), out var newtMesh);
             var newtShape = Simulation.Shapes.Add(newtMesh);
