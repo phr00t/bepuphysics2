@@ -29,6 +29,7 @@ namespace BepuPhysics
         public BroadPhase BroadPhase { get; private set; }
         public CollidableOverlapFinder BroadPhaseOverlapFinder { get; private set; }
         public NarrowPhase NarrowPhase { get; private set; }
+        public object BroadphaseLocker { get; private set; } = new object();
 
         SimulationProfiler profiler = new SimulationProfiler(13);
         /// <summary>
@@ -269,7 +270,9 @@ namespace BepuPhysics
         public void CollisionDetection(float dt, IThreadDispatcher threadDispatcher = null)
         {
             profiler.Start(BroadPhase);
-            BroadPhase.Update(threadDispatcher);
+            lock (BroadphaseLocker) {
+                BroadPhase.Update(threadDispatcher);
+            }
             profiler.End(BroadPhase);
 
             profiler.Start(BroadPhaseOverlapFinder);
